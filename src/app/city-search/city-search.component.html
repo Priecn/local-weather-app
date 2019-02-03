@@ -1,0 +1,8 @@
+<mat-form-field style="margin-bottom: 32px">
+  <mat-icon matPrefix>search</mat-icon>
+  <input matInput placeholder="Enter city or zip" [formControl]="search">
+  <mat-error *ngIf="search.invalid">
+    Type more than one character to search.
+  </mat-error>
+  <mat-hint>Specify country code like 'Bangalore, IN'</mat-hint>
+</mat-form-field>

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { ICurrentWeather } from '../interfaces';
@@ -26,17 +26,43 @@ interface ICurrentWeatherData {
 })
 export class WeatherService {
 
+  currentWeather = new BehaviorSubject<ICurrentWeather>({
+    'city': '--',
+    'country': '--',
+    'date': Date.now(),
+    'image': '',
+    temperature: 0,
+    description: ''
+  });
+
   constructor(private httpClient: HttpClient) { }
 
-  getCurrentWeather(city: string, country: string): Observable<ICurrentWeather> {
+  getCurrentWeather(cityNameOrZip: string | number, country?: string): Observable<ICurrentWeather> {
+    let uriParams = '';
+    if (typeof cityNameOrZip === 'string')
+      uriParams = `q=${cityNameOrZip}`;
+    else
+      uriParams = `zip=${cityNameOrZip}`;
+
+    if (country)
+      uriParams = `${uriParams},${country}`;
+
+    return this.getCurrentWeatherHelper(uriParams);
+  }
+
+  getCurrentWeatherByCoords(coords: Coordinates): Observable<ICurrentWeather> {
+    const uriParams = `lat=${coords.latitude}&lon=${coords.longitude}`;
+    return this.getCurrentWeatherHelper(uriParams);
+  }
+
+  private getCurrentWeatherHelper(uriParams: string): Observable<ICurrentWeather> {
     return this.httpClient.get<ICurrentWeatherData>(
       `${environment.baseUrl}api.openweathermap.org/data/2.5/weather?` +
-      `q=${city},${country}&appid=${environment.appId}`
+      `${uriParams}&appid=${environment.appId}`
     ).pipe(
       map(wd => this.transferToICurrentWeather(wd))
     );
   }
-
   private transferToICurrentWeather(currentWeatherData: ICurrentWeatherData): ICurrentWeather {
     return {
       'city': currentWeatherData.name,
@@ -50,5 +76,16 @@ export class WeatherService {
 
   private convertKelvinToFahrenheit(temp: number): number {
     return temp * 9 / 5 - 459.67;
+  }
+
+  getPosition(): Promise<any> {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resp => {
+        resolve({ longitude: resp.coords.longitude, latitude: resp.coords.latitude });
+      },
+        err => {
+          reject(err);
+        });
+    });
   }
 }

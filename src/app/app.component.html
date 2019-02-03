@@ -5,16 +5,22 @@
   <div fxLayoutAlign="center">
     <div class="mat-caption vertical-margin"> Your city, your forecast, right now!</div>
   </div>
+  <div fxLayoutAlign="center">
+    <app-city-search (searchEvent)="doSearch($event)"></app-city-search>
+  </div>
   <div fxLayout="row">
     <div fxFlex></div>
     <mat-card fxFlex="300px">
       <mat-card-header>
         <mat-card-title>
-          <div class="mat-headline"> Current Weather </div>
+          <div class="mat-headline"> {{heading}} </div>
         </mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <app-current-weather></app-current-weather>
+        <app-current-weather *ngIf="weatherFound; else loading" [current]="currentWeather"></app-current-weather>
+        <ng-template #loading>
+          <div class="mat-caption">Please wait...</div>
+        </ng-template>
       </mat-card-content>
     </mat-card>
     <div fxFlex></div>
